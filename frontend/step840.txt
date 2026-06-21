@@ -1,0 +1,103 @@
+<USER_REQUEST>
+<!-- product card design heavily inspired by this dribbble: https://dribbble.com/shots/25496729-Modern-Product-Card-Design -->
+
+<a
+      aria-label="Follow Jhey"
+      class="craft-link"
+      href="https://twitter.com/intent/follow?screen_name=jh3yy"
+      target="_blank"
+      rel="noreferrer noopener"
+    >
+      <svg
+        class="spinner"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g>
+          <path
+            d="M1 8.32812L0.16795 7.77342C-0.0766006 8.14025 -0.0520715 8.62395 0.228333 8.96415L1 8.32812ZM23 8.32812V9.32812C23.3688 9.32812 23.7077 9.12509 23.8817 8.79988C24.0557 8.47466 24.0366 8.08007 23.8319 7.77323L23 8.32812ZM23.7716 8.96807C24.1229 8.54193 24.0623 7.91168 23.6361 7.56035C23.21 7.20902 22.5798 7.26966 22.2284 7.6958L23 8.33193L23.7716 8.96807ZM12 21.674L11.2283 22.31C11.4183 22.5405 11.7013 22.674 11.9999 22.674C12.2986 22.674 12.5816 22.5406 12.7716 22.3101L12 21.674ZM5 2.32812V1.32812C4.66565 1.32812 4.35342 1.49523 4.16795 1.77342L5 2.32812ZM19.8319 1.77634C19.5255 1.31688 18.9046 1.19286 18.4451 1.49932C17.9856 1.80578 17.8616 2.42668 18.1681 2.88614L19 2.33124L19.8319 1.77634ZM1 8.32812V9.32812H23V8.32812V7.32812H1V8.32812ZM23 8.33193L22.2284 7.6958L11.2284 21.0379L12 21.674L12.7716 22.3101L23.7716 8.96807L23 8.33193ZM1 8.32812L0.228333 8.96415L11.2283 22.31L12 21.674L12.7717 21.038L1.77167 7.6921L1 8.32812ZM5 2.32812V3.32812H19V2.32812V1.32812H5V2.32812ZM1 8.32812L1.83205 8.88283L5.83205 2.88283L5 2.32812L4.16795 1.77342L0.16795 7.77342L1 8.32812ZM23 8.32812L23.8319 7.77323L19.8319 1.77634L19 2.33124L18.1681 2.88614L22.1681 8.88302L23 8.32812Z"
+            fill="currentColor"
+          ></path>
+          <g clip-path="url(#bottom)">
+            <g class="gem__bottom">
+              <path
+                d="M-8.32152 12.5758L32.3292 29.4139M20.4171 41.328L3.57906 0.677333M-8.32369 29.4147L32.327 12.5767M3.57815 41.3259L20.4162 0.675164M-10 20.9922L34 20.9922M27.5541 36.558L-3.55864 5.44531M-3.55801 36.5
+<truncated 45214 bytes>
+new Pane({
+    title: 'Spotlight Config',
+    expanded: true,
+  })
+
+  // ── Reveal toggle (top level) ──
+  ctrl.addBinding(P, 'reveal', { label: 'Reveal' }).on('change', (e) => {
+    document.documentElement.toggleAttribute('data-reveal', e.value)
+  })
+
+  ctrl.addBlade({ view: 'separator' })
+
+  // ── Presets ──
+  const presetsFolder = ctrl.addFolder({ title: 'Presets', expanded: false })
+  const allPresets = getAllPresets()
+  const presetOptions = Object.fromEntries(
+    Object.keys(allPresets).map((k) => [k, k])
+  )
+  const presetState = { preset: '' }
+
+  presetsFolder
+    .addBinding(presetState, 'preset', {
+      label: 'Load',
+      options: { '— select —': '', ...presetOptions },
+    })
+    .on('change', ({ value }) => {
+      if (!value) return
+      const preset = getAllPresets()[value]
+      if (!preset) return
+      const loaded = JSON.parse(JSON.stringify(preset))
+      Object.assign(P, loaded)
+      syncHoverDelay()
+      buildPane()
+    })
+
+  presetsFolder
+    .addButton({ title: 'Save current as preset' })
+    .on('click', () => {
+      const name = prompt('Preset name:')
+      if (!name?.trim()) return
+      saveCustomPreset(name.trim(), getPresetData())
+      buildPane()
+    })
+
+  // ── Lighting ──
+  const lighting = ctrl.addFolder({ title: 'Lighting', expanded: false })
+  lighting.addBinding(P, 'lightHeight', {
+    min: 0.05,
+    max: 3.0,
+    step: 0.01,
+    label: 'Light Height',
+  })
+  lighting.addBinding(P, 'shadowStrength', {
+    min: 0,
+    max: 1,
+    step: 0.01,
+    label: 'Shadow Strength',
+  })
+  lighting.addBinding(P, 'shadowSoftness', {
+    min: 0.005,
+    max: 0.2,
+    step: 0.001,
+    label: 'Shadow Softness',
+  })
+  lighting.addBinding(P, 'shadowLength', {
+    min: 0.1,
+    max: 3.0,
+    step: 0.05,
+    label: 'Shadow Reach',
+  })
+  lighting.addBinding(P, 'minBrightness', {
+    min: 0,
+    max: 1,
+  
+<truncated 3415 bytes>
+
+NOTE: The output was truncated because it was too long. Use a more targeted query or a smaller range to get the information you need.

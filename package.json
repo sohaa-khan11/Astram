@@ -1,0 +1,16 @@
+{
+  "name": "astram-parking-intelligence",
+  "version": "1.0.0",
+  "description": "The ASTraM Parking Intelligence System is a specialized AI-driven operations command console designed for the Bengaluru Traffic Police. By processing raw violation records, it identifies illegal parking hotspots, generates an explainable proxy for congestion impact, and flags high-confidence valid records for manual triage—ultimately enabling prioritized and targeted enforcement.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "md-to-pdf": "^5.2.5"
+  }
+}
