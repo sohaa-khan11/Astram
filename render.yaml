@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: astram-parking-api
+    runtime: python
+    buildCommand: pip install -r api/requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: MAPPLS_REST_API_KEY
+        sync: false
+      - key: MAPPLS_CLIENT_ID
+        sync: false
+      - key: MAPPLS_CLIENT_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      # DATA_DIR is only needed if you move the notebook/exports folder
+      # Defaults to ./notebook/exports relative to repo root
+      # - key: DATA_DIR
+      #   value: /opt/render/project/src/notebook/exports
+    healthCheckPath: /api/health
+    rootDir: .
+    plan: free

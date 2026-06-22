@@ -1,9 +1,40 @@
+# Environment files (never commit secrets)
 .env
+.env.local
+.env.production
+.env.production.local
+
+# Python virtual environments
 .venv/
 venv/
+env/
+
+# Node modules
 node_modules/
+
+# Python cache
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Build artifacts
 dist/
+build/
+*.egg-info/
+
+# OS artifacts
 .DS_Store
+Thumbs.db
+
+# Large raw data (ticks_output.json is 49MB - not needed for deployment)
 ticks_output.json
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# NOTE: notebook/exports/ is intentionally NOT ignored.
+# The parquet and json exports are the production data source and must be committed.

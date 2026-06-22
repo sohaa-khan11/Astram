@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Map3D } from '../components/Map3D';
 import type { TowTruck } from '../App';
 import { NETWORK_EDGES, NETWORK_NODES, EDGE_ROAD_NAMES } from '../App';
+import { API_BASE } from '../lib/api';
 
 interface PresentMapPageProps {
   towTrucks: TowTruck[];
@@ -88,7 +89,7 @@ export const PresentMapPage: React.FC<PresentMapPageProps> = ({
         }).length;
       }
       
-      return fetch(`http://localhost:8000/api/traffic/clearance_time?edge_id=${id}&level=${lvl}&adjacent_load=${adjacentLoad}`)
+      return fetch(`${API_BASE}/traffic/clearance_time?edge_id=${id}&level=${lvl}&adjacent_load=${adjacentLoad}`)
         .then(res => res.json())
         .then(data => ({
           id,

@@ -1,3 +1,5 @@
+import { API_BASE } from './api';
+
 export const mapProvider = {
 
     // MapmyIndia (Mappls) Integration Settings
@@ -7,7 +9,7 @@ export const mapProvider = {
     // Dynamically build map style based on selected basemap type
     getMapStyle: (type: 'LIGHT' | 'DARK' | 'SATELLITE' | 'MAPMYINDIA') => {
         if (type === 'MAPMYINDIA') {
-            return `http://localhost:8000/api/mapstyle/mapmyindia`;
+            return `${API_BASE}/mapstyle/mapmyindia`;
         }
 
         let tileUrl = 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';

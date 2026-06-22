@@ -311,7 +311,7 @@ def analyze_image(base64_str: str) -> Dict[str, Any]:
         
         # 1. Try OpenAI GPT-4o-mini Vision API if key is configured
         api_key = os.environ.get("OPENAI_API_KEY")
-        if api_key:
+        if api_key and not api_key.startswith("your_") and api_key.strip():
             try:
                 image_url = base64_str if "," in base64_str else f"data:image/jpeg;base64,{base64_str}"
                 headers = {

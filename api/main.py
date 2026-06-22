@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional, Dict, Any
@@ -13,20 +14,26 @@ from .image_analyzer import analyze_image, get_vehicle_history
 import pandas as pd
 import numpy as np
 
-app = FastAPI(title="ASTraM Parking Intelligence API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan - loads data on startup."""
+    data_store.load_all()
+    yield
 
-# Allow CORS for frontend
+app = FastAPI(title="ASTraM Parking Intelligence API", lifespan=lifespan)
+
+# CORS configuration - restrict to specific origins in production via ALLOWED_ORIGINS env var
+# Example: ALLOWED_ORIGINS=https://astram.vercel.app,https://your-custom-domain.com
+_raw_origins = os.environ.get("ALLOWED_ORIGINS", "")
+allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()] if _raw_origins else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.on_event("startup")
-def startup_event():
-    data_store.load_all()
 
 @app.get("/")
 def read_root():
@@ -38,6 +45,18 @@ def read_root():
             "hotspots": "/api/hotspots",
             "stations": "/api/stations",
             "triage_queue": "/api/triage/queue"
+        }
+    }
+
+@app.get("/api/health")
+def health_check():
+    """Health check endpoint for deployment platforms."""
+    return {
+        "status": "ok",
+        "data_loaded": {
+            "hotspots": len(data_store.hotspots),
+            "stations": len(data_store.stations),
+            "violations_df": len(data_store.df_clustered) if data_store.df_clustered is not None else 0
         }
     }
 
@@ -85,7 +104,7 @@ def get_hotspot_detail(cluster_id: int):
 @app.get("/api/hotspots/{cluster_id}/timeline")
 def get_hotspot_timeline(cluster_id: int):
     if data_store.df_clustered is None:
-        raise HTTPException(status_code=500, detail="Data not loaded")
+        return [{"hour_ist": h, "activity_pct": 0.0} for h in range(24)]
     
     df = data_store.df_clustered
     cluster_df = df[df['cluster_id'] == cluster_id]
@@ -138,7 +157,7 @@ def get_hotspot_copilot_recommendation(cluster_id: int):
         raise HTTPException(status_code=404, detail="Hotspot not found")
         
     api_key = os.environ.get("OPENAI_API_KEY")
-    if api_key:
+    if api_key and not api_key.startswith("your_") and api_key.strip():
         try:
             stats_summary = (
                 f"Hotspot ID: {hotspot['cluster_id']}\n"
@@ -230,7 +249,7 @@ def get_stations():
 @app.get("/api/analytics/forecast")
 def get_congestion_forecast(station: Optional[str] = None) -> List[Dict[str, Any]]:
     if data_store.df_clustered is None:
-        raise HTTPException(status_code=500, detail="Data not loaded")
+        return []
     
     df = data_store.df_clustered
     if station:
@@ -274,7 +293,7 @@ def get_congestion_forecast(station: Optional[str] = None) -> List[Dict[str, Any
 @app.get("/api/hotspots/{cluster_id}/forecast")
 def get_hotspot_forecast(cluster_id: int) -> List[Dict[str, Any]]:
     if data_store.df_clustered is None:
-        raise HTTPException(status_code=500, detail="Data not loaded")
+        return [{"hour": h, "predicted_violations": 0, "congestion_probability": 0.0} for h in range(24)]
     
     df = data_store.df_clustered
     cluster_df = df[df['cluster_id'] == cluster_id].copy()
@@ -346,7 +365,7 @@ def get_traffic_clearance_time(edge_id: str, level: str, adjacent_load: int = 0)
 @app.get("/api/devices/reliability")
 def get_devices_reliability():
     if data_store.df_clustered is None:
-        raise HTTPException(status_code=500, detail="Data not loaded")
+        return []
     
     df = data_store.df_clustered
     
@@ -395,15 +414,19 @@ def get_devices_reliability():
     return results
 
 @app.get("/api/mapstyle/mapmyindia")
-def get_mapmyindia_style(key: str = "6bcfcdd177f2816fd046f62613c17b99"):
-    url = f"https://apis.mappls.com/advancedmaps/v1/{key}/map_style?theme=dark"
-    try:
-        resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
-        if resp.status_code == 200:
-            return resp.json()
-        print(f"MapmyIndia responded with status {resp.status_code}. Using Tactical Dark style fallback.")
-    except Exception as e:
-        print(f"Failed to fetch style from MapmyIndia: {e}. Using Tactical Dark style fallback.")
+def get_mapmyindia_style(key: Optional[str] = None):
+    api_key = key or os.environ.get("MAPPLS_REST_API_KEY")
+    if not api_key or api_key.startswith("your_") or not api_key.strip():
+        print("No MapmyIndia API Key found in environment. Using Tactical Dark style fallback.")
+    else:
+        url = f"https://apis.mappls.com/advancedmaps/v1/{api_key}/map_style?theme=dark"
+        try:
+            resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+            if resp.status_code == 200:
+                return resp.json()
+            print(f"MapmyIndia responded with status {resp.status_code}. Using Tactical Dark style fallback.")
+        except Exception as e:
+            print(f"Failed to fetch style from MapmyIndia: {e}. Using Tactical Dark style fallback.")
     
     # Fallback style JSON to prevent client-side AJAX/fetch map crashes
     return {

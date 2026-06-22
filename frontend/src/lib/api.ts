@@ -64,65 +64,85 @@ export interface StationData {
     top_hotspot_id: number | null;
 }
 
-const API_BASE = "http://localhost:8000/api";
+// Use VITE_API_BASE_URL env var in production (set to Render backend URL)
+// Falls back to /api which is proxied by vite dev server in local dev
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+
+/**
+ * Graceful fetch wrapper — returns null on network error instead of throwing.
+ * This ensures judge-facing features degrade gracefully.
+ */
+async function safeFetch<T>(url: string, options?: RequestInit): Promise<T | null> {
+    try {
+        const res = await fetch(url, options);
+        if (!res.ok) {
+            console.warn(`API request to ${url} returned status ${res.status}`);
+            return null;
+        }
+        return await res.json() as T;
+    } catch (err) {
+        console.warn(`API request to ${url} failed:`, err);
+        return null;
+    }
+}
 
 export const api = {
     async getSummary(): Promise<Summary> {
-        const res = await fetch(`${API_BASE}/summary`);
-        return res.json();
+        const data = await safeFetch<Summary>(`${API_BASE}/summary`);
+        return data ?? {
+            total_violations: 0,
+            total_clusters: 0,
+            top_station: 'N/A',
+            mean_rejection_rate: 0
+        };
     },
 
     async getHotspots(): Promise<Hotspot[]> {
-        const res = await fetch(`${API_BASE}/hotspots`);
-        return res.json();
+        return await safeFetch<Hotspot[]>(`${API_BASE}/hotspots`) ?? [];
     },
 
     async getTimeline(clusterId: number): Promise<TimelineData[]> {
-        const res = await fetch(`${API_BASE}/hotspots/${clusterId}/timeline`);
-        return res.json();
+        return await safeFetch<TimelineData[]>(`${API_BASE}/hotspots/${clusterId}/timeline`) ?? [];
     },
 
     async getRecommendation(clusterId: number): Promise<Recommendation> {
-        const res = await fetch(`${API_BASE}/hotspots/${clusterId}/recommend`);
-        return res.json();
+        const data = await safeFetch<Recommendation>(`${API_BASE}/hotspots/${clusterId}/recommend`);
+        return data ?? { recommendation: 'N/A', rationale: 'Backend unavailable.' };
     },
 
     async getCopilotRecommendation(clusterId: number): Promise<{ copilot_report: string; model: string }> {
-        const res = await fetch(`${API_BASE}/hotspots/${clusterId}/copilot`);
-        return res.json();
+        const data = await safeFetch<{ copilot_report: string; model: string }>(`${API_BASE}/hotspots/${clusterId}/copilot`);
+        return data ?? {
+            copilot_report: '### System Unavailable\nCould not connect to the backend. Please ensure the API server is running.',
+            model: 'offline'
+        };
     },
 
     async getStations(): Promise<StationData[]> {
-        const res = await fetch(`${API_BASE}/stations`);
-        return res.json();
+        return await safeFetch<StationData[]>(`${API_BASE}/stations`) ?? [];
     },
 
     async getTriageQueue(): Promise<TriageRecord[]> {
-        const res = await fetch(`${API_BASE}/triage/queue`);
-        return res.json();
+        return await safeFetch<TriageRecord[]>(`${API_BASE}/triage/queue`) ?? [];
     },
 
     async simulateTick(startTime: string, endTime: string): Promise<SimulationEvent[]> {
-        const response = await fetch(`${API_BASE}/simulate/tick`, {
+        return await safeFetch<SimulationEvent[]>(`${API_BASE}/simulate/tick`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ start: startTime, end: endTime })
-        });
-        return response.json();
+        }) ?? [];
     },
 
     async getForecast(): Promise<{ timestamp: string; hour: number; predicted_violations: number; congestion_probability: number }[]> {
-        const res = await fetch(`${API_BASE}/analytics/forecast`);
-        return res.json();
+        return await safeFetch<{ timestamp: string; hour: number; predicted_violations: number; congestion_probability: number }[]>(`${API_BASE}/analytics/forecast`) ?? [];
     },
 
     async getHotspotForecast(clusterId: number): Promise<{ hour: number; predicted_violations: number; congestion_probability: number }[]> {
-        const res = await fetch(`${API_BASE}/hotspots/${clusterId}/forecast`);
-        return res.json();
+        return await safeFetch<{ hour: number; predicted_violations: number; congestion_probability: number }[]>(`${API_BASE}/hotspots/${clusterId}/forecast`) ?? [];
     },
 
     async getDevicesReliability(): Promise<{ device_id: string; total_captured: number; approved: number; rejected: number; reliability_score: number; status: string; message: string; last_seen: string }[]> {
-        const res = await fetch(`${API_BASE}/devices/reliability`);
-        return res.json();
+        return await safeFetch<{ device_id: string; total_captured: number; approved: number; rejected: number; reliability_score: number; status: string; message: string; last_seen: string }[]>(`${API_BASE}/devices/reliability`) ?? [];
     }
 };

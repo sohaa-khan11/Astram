@@ -362,10 +362,11 @@ function App() {
     });
 
     useEffect(() => {
-        api.getSummary().then(setSummary);
-        api.getHotspots().then(setHotspots);
-        api.getTriageQueue().then(setTriageQueue);
+        api.getSummary().then(setSummary).catch(() => setSummary(null));
+        api.getHotspots().then(setHotspots).catch(() => setHotspots([]));
+        api.getTriageQueue().then(setTriageQueue).catch(() => setTriageQueue([]));
     }, []);
+
 
     // Traffic congestion updates timer (15 seconds)
     useEffect(() => {

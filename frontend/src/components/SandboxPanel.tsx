@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, CheckCircle2, ShieldAlert, FileImage, Camera, Monitor } from 'lucide-react';
 import type { TowTruck } from '../App';
+import { API_BASE } from '../lib/api';
 
 const CCTV_STREAMS = [
     { id: 'CCTV-01', name: 'Richmond Road Junction', url: '/car-detection.mp4', violation: 'DOUBLE PARKING', plate: 'KA-03-NP-1290', model: 'Hyundai Creta', owner: 'Ramesh Gowda', severity: 'Medium Obstruction' },
@@ -141,7 +142,7 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ towTrucks = [] }) =>
     useEffect(() => {
         if (activeTab === 'LIVE' && cctvTime >= 8 && !liveRtoInfo && !loadingLiveRto) {
             setLoadingLiveRto(true);
-            fetch(`http://localhost:8000/api/rto/lookup?plate=${encodeURIComponent(selectedCctv.plate)}`)
+            fetch(`${API_BASE}/rto/lookup?plate=${encodeURIComponent(selectedCctv.plate)}`)
                 .then(res => {
                     if (!res.ok) throw new Error("RTO query failed");
                     return res.json();
@@ -185,7 +186,7 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ towTrucks = [] }) =>
 
         try {
             const scanDelay = new Promise(resolve => setTimeout(resolve, 2000));
-            const apiCall = fetch('http://localhost:8000/api/sandbox/analyze', {
+            const apiCall = fetch(`${API_BASE}/sandbox/analyze`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ image: imagePreview })
@@ -217,7 +218,7 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ towTrucks = [] }) =>
         if (!vehicle || vehicle.violation === 'NONE') return;
         
         try {
-            const response = await fetch('http://localhost:8000/api/triage/inject', {
+            const response = await fetch(`${API_BASE}/triage/inject`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -246,7 +247,7 @@ export const SandboxPanel: React.FC<SandboxPanelProps> = ({ towTrucks = [] }) =>
     // --- LIVE CCTV INJECTION ---
     const injectLiveViolation = async () => {
         try {
-            const response = await fetch('http://localhost:8000/api/triage/inject', {
+            const response = await fetch(`${API_BASE}/triage/inject`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
