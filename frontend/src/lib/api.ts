@@ -66,7 +66,17 @@ export interface StationData {
 
 // Use VITE_API_BASE_URL env var in production (set to Render backend URL)
 // Falls back to /api which is proxied by vite dev server in local dev
-export const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+const getApiBase = (): string => {
+    let base = import.meta.env.VITE_API_BASE_URL || "/api";
+    // Clean trailing slashes
+    base = base.replace(/\/+$/, "");
+    // If the base starts with http/https and does NOT end with /api, append /api
+    if (base.startsWith("http") && !base.endsWith("/api")) {
+        base = base + "/api";
+    }
+    return base;
+};
+export const API_BASE = getApiBase();
 
 /**
  * Graceful fetch wrapper — returns null on network error instead of throwing.
