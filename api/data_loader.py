@@ -62,7 +62,8 @@ class DataLoader:
                 'id', 'police_station', 'cluster_id', 'validation_status',
                 'vist_ist', 'latitude', 'longitude', 'violation_list',
                 'hour_ist', 'violation_count', 'vehicle_number', 'vehicle_type',
-                'primary_violation', 'severity_score', 'created_datetime'
+                'primary_violation', 'severity_score', 'created_datetime',
+                'location', 'violation_type', 'device_id', 'junction_name'
             ]
             try:
                 self._df_clustered = pd.read_parquet(self.clustered_path, columns=cols)
