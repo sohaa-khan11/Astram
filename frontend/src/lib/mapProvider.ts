@@ -3,8 +3,9 @@ import { API_BASE } from './api';
 export const mapProvider = {
 
     // MapmyIndia (Mappls) Integration Settings
-    // Replace with a valid key (e.g. from your hackathon dashboard) to enable MapmyIndia styles
-    MAPMYINDIA_API_KEY: '6bcfcdd177f2816fd046f62613c17b99', 
+    // Set VITE_MAPPLS_API_KEY in your Vercel environment variables (or .env.local for dev)
+    // If not set, the map falls back to CartoDB dark tiles automatically
+    MAPMYINDIA_API_KEY: import.meta.env.VITE_MAPPLS_API_KEY || '',
 
     // Dynamically build map style based on selected basemap type
     getMapStyle: (type: 'LIGHT' | 'DARK' | 'SATELLITE' | 'MAPMYINDIA') => {
