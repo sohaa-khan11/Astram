@@ -369,18 +369,23 @@ def get_devices_reliability():
     
     df = data_store.df_clustered
     
-    device_stats = df.groupby('device_id').agg(
+    # Pre-compute comparison columns as standard integers to avoid PyArrow groupby issues
+    df_temp = df[['device_id', 'id', 'validation_status', 'created_datetime']].copy()
+    df_temp['is_rejected'] = (df_temp['validation_status'] == 'rejected').fillna(False).astype('int64')
+    df_temp['is_approved'] = (df_temp['validation_status'] == 'approved').fillna(False).astype('int64')
+    
+    device_stats = df_temp.groupby('device_id').agg(
         total_captured=('id', 'count'),
-        rejected_count=('validation_status', lambda x: (x == 'rejected').sum()),
-        approved_count=('validation_status', lambda x: (x == 'approved').sum()),
+        rejected_count=('is_rejected', 'sum'),
+        approved_count=('is_approved', 'sum'),
         last_seen=('created_datetime', 'max')
     ).reset_index()
     
     results = []
     for _, row in device_stats.iterrows():
-        total = row['total_captured']
-        rejected = row['rejected_count']
-        approved = row['approved_count']
+        total = int(row['total_captured'])
+        rejected = int(row['rejected_count'])
+        approved = int(row['approved_count'])
         validated = approved + rejected
         
         rejection_rate = float(rejected / validated) if validated > 0 else 0.0

@@ -66,7 +66,7 @@ class DataLoader:
                 'location', 'violation_type', 'device_id', 'junction_name'
             ]
             try:
-                self._df_clustered = pd.read_parquet(self.clustered_path, columns=cols)
+                self._df_clustered = pd.read_parquet(self.clustered_path, columns=cols, dtype_backend='pyarrow')
                 print(f"Lazy loaded clustered_violations.parquet. ({len(self._df_clustered)} rows)")
             except Exception as e:
                 print(f"Error lazy loading clustered_violations.parquet: {e}")
@@ -87,11 +87,22 @@ class DataLoader:
     def _generate_station_rollup(self):
         df = self.df_clustered
         if df is None: return []
-        rollup = df.groupby('police_station').agg(
+        
+        # Optimize calculations to avoid PyArrow groupby type-coercion issues
+        df_temp = df[['police_station', 'id', 'cluster_id', 'validation_status']].copy()
+        df_temp['is_rejected'] = (df_temp['validation_status'] == 'rejected').fillna(False).astype('float64')
+        
+        rollup = df_temp.groupby('police_station').agg(
             total_violations=('id', 'count'),
-            cluster_count=('cluster_id', lambda x: x[x>=0].nunique()),
-            rejected_pct=('validation_status', lambda x: (x == 'rejected').mean())
+            cluster_count=('cluster_id', lambda x: int(x[x>=0].nunique())),
+            rejected_pct=('is_rejected', 'mean')
         ).reset_index()
+        
+        # Explicitly cast to standard python dtypes for compatibility
+        rollup['police_station'] = rollup['police_station'].astype(str)
+        rollup['total_violations'] = rollup['total_violations'].astype('int64')
+        rollup['cluster_count'] = rollup['cluster_count'].astype('int64')
+        rollup['rejected_pct'] = rollup['rejected_pct'].astype('float64')
         
         # Merge top hotspot
         hs_df = pd.DataFrame(self.hotspots)
