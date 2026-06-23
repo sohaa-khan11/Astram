@@ -253,17 +253,20 @@ def get_congestion_forecast(station: Optional[str] = None) -> List[Dict[str, Any
     
     df = data_store.df_clustered
     if station:
-        df = df[df['police_station'] == station]
+        series_vist = df.loc[df['police_station'] == station, 'vist_ist']
+    else:
+        series_vist = df['vist_ist']
         
-    if df.empty:
+    if series_vist.empty:
         return []
     
     import datetime
     now = datetime.datetime.now()
     
-    df_temp = df.copy()
-    df_temp['dayofweek'] = df_temp['vist_ist'].dt.dayofweek
-    df_temp['hour'] = df_temp['vist_ist'].dt.hour
+    df_temp = pd.DataFrame({
+        'dayofweek': series_vist.dt.dayofweek,
+        'hour': series_vist.dt.hour
+    })
     
     hourly_avg = df_temp.groupby(['dayofweek', 'hour']).size().reset_index(name='count')
     max_count = hourly_avg['count'].max() if not hourly_avg.empty else 1.0
@@ -467,8 +470,8 @@ def get_junctions():
         return []
     
     df = data_store.df_clustered
-    df_j = df[df['junction_name'] != 'No Junction']
-    counts = df_j['junction_name'].value_counts().reset_index()
+    series_j = df.loc[df['junction_name'] != 'No Junction', 'junction_name']
+    counts = series_j.value_counts().reset_index()
     counts.columns = ['junction_name', 'violation_count']
     return counts.to_dict(orient='records')
 
@@ -490,15 +493,15 @@ def get_triage_queue():
         return list(injected_records)
         
     df = data_store.df_clustered
-    # Filter to only records that have a known validation status
-    df_valid = df[df['validation_status'].isin(['approved', 'rejected'])]
+    # Filter indices first instead of creating a full copy of matching rows
+    valid_indices = df.index[df['validation_status'].isin(['approved', 'rejected'])]
     
-    if df_valid.empty:
+    if len(valid_indices) == 0:
         return list(injected_records)
         
-    # Sample 100 records consistently (seeded) to act as the "Inbox queue"
-    # We'll use a fixed random state so the queue doesn't shift wildly on every refresh during a demo
-    sample = df_valid.sample(n=min(100, len(df_valid)), random_state=42)
+    # Sample 100 indices consistently (seeded) to act as the "Inbox queue"
+    sampled_indices = pd.Series(valid_indices).sample(n=min(100, len(valid_indices)), random_state=42)
+    sample = df.loc[sampled_indices]
     
     records = []
     for _, row in sample.iterrows():
